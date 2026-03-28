@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SMK Management System</title>
+    <style>
+        /* ================= 基础样式重置 ================= */
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { display: flex; flex-direction: column; height: 100vh; overflow: hidden; background-color: #f4f6f7; }
+
+        /* ================= 登入页面样式 ================= */
+        #login-page {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(135deg, #2c3e50, #3498db);
+            display: flex; justify-content: center; align-items: center; z-index: 9999; 
+        }
+        .login-box { background: white; padding: 40px; border-radius: 10px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); width: 100%; max-width: 400px; text-align: center; }
+        .login-logo { width: 100px; height: 100px; margin-bottom: 20px; object-fit: contain; }
+        .login-box h2 { color: #2c3e50; margin-bottom: 10px; font-size: 24px; }
+        .login-box p { color: #7f8c8d; margin-bottom: 30px; font-size: 14px; }
+        .login-input { width: 100%; padding: 12px 15px; margin-bottom: 20px; border: 1px solid #ddd; border-radius: 5px; font-size: 16px; outline: none; transition: border-color 0.2s; }
+        .login-input:focus { border-color: #3498db; }
+        .login-btn { width: 100%; padding: 12px; background-color: #d32f2f; color: white; border: none; border-radius: 5px; font-size: 16px; font-weight: bold; cursor: pointer; transition: background 0.2s; }
+        .login-btn:hover { background-color: #c0392b; }
+        .error-msg { color: #e74c3c; font-size: 14px; margin-top: 15px; display: none; }
+
+        /* ================= 系统主界面容器 ================= */
+        #main-app { display: none; flex-direction: column; height: 100%; width: 100%; }
+
+        /* ================= 顶部导航栏 ================= */
+        header { background-color: #d32f2f; color: white; padding: 10px 20px; display: flex; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.2); z-index: 10; }
+        .menu-toggle { background: none; border: none; color: white; font-size: 24px; cursor: pointer; margin-right: 20px; }
+        .header-title-container { display: flex; align-items: center; flex: 1; }
+        .header-logo { width: 40px; height: 40px; margin-right: 15px; object-fit: contain; border-radius: 50%; background-color: white; padding: 2px; }
+        header h1 { font-size: 20px; font-weight: 600; }
+        .logout-btn { background-color: transparent; color: white; border: 1px solid white; padding: 8px 15px; border-radius: 5px; cursor: pointer; font-size: 14px; font-weight: bold; transition: all 0.2s; }
+        .logout-btn:hover { background-color: white; color: #d32f2f; }
+
+        /* ================= 页面主要布局 ================= */
+        .main-container { display: flex; flex: 1; height: calc(100vh - 60px); }
+
+        /* ================= 左侧菜单 ================= */
+        .sidebar { width: 250px; background-color: #2c3e50; color: white; overflow-y: auto; transition: transform 0.3s ease; transform: translateX(0); display: flex; flex-direction: column; justify-content: space-between; }
+        .sidebar.hidden { transform: translateX(-100%); width: 0; }
+        .menu-list { list-style: none; }
+        .menu-item { border-bottom: 1px solid #34495e; }
+        .menu-title { padding: 15px 20px; cursor: pointer; display: flex; justify-content: space-between; background-color: #34495e; transition: background 0.2s; }
+        .menu-title:hover { background-color: #3d566e; }
+        .submenu { list-style: none; display: none; background-color: #2c3e50; }
+        .submenu.active { display: block; }
+        .submenu li { padding: 10px 20px 10px 40px; cursor: pointer; font-size: 14px; transition: background 0.2s; }
+        .submenu li:hover { background-color: #1a252f; color: #3498db; }
+        .home-btn { width: 100%; padding: 15px; background-color: #e74c3c; color: white; border: none; font-size: 16px; cursor: pointer; text-align: left; margin-top: auto; transition: background 0.2s; }
+        .home-btn:hover { background-color: #c0392b; }
+
+        /* ================= 右侧内容区 ================= */
+        .content-area { flex: 1; padding: 20px; display: flex; flex-direction: column; overflow-y: auto; }
+        .content-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 2px solid #ddd; }
+        .content-header h2 { color: #333; }
+        #edit-btn { background-color: #1976d2; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-size: 16px; display: none; transition: background 0.2s; }
+        #edit-btn:hover { background-color: #1565c0; }
+        .iframe-container { flex: 1; background-color: white; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); overflow: hidden; display: flex; flex-direction: column; }
+        iframe { width: 100%; height: 100%; border: none; }
+
+        /* ================= 仪表盘 & 时钟样式 ================= */
+        .dashboard { padding: 30px; width: 100%; height: 100%; overflow-y: auto; background-color: #f8f9fa; }
+        
+        .welcome-banner { 
+            background: linear-gradient(135deg, #1976d2, #64b5f6); 
+            color: white; padding: 30px; border-radius: 10px; margin-bottom: 30px; 
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1); display: flex; justify-content: space-between; 
+            align-items: center; flex-wrap: wrap; 
+        }
+        .welcome-text { flex: 1; min-width: 250px; }
+        .welcome-text h1 { margin-bottom: 10px; font-size: 28px;}
+        .welcome-text p { font-size: 16px; opacity: 0.9; }
+
+        .clock-container {
+            background: rgba(255, 255, 255, 0.2); padding: 15px 25px; border-radius: 10px;
+            text-align: right; backdrop-filter: blur(5px); border: 1px solid rgba(255, 255, 255, 0.3);
+            margin-top: 10px;
+        }
+        .clock-time { font-size: 32px; font-weight: bold; letter-spacing: 2px; margin-bottom: 5px; font-family: 'Courier New', Courier, monospace; }
+        .clock-date { font-size: 14px; opacity: 0.9; }
+
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; }
+        .stat-card { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); display: flex; align-items: center; border-left: 5px solid #d32f2f; }
+        .stat-icon { font-size: 40px; margin-right: 20px; }
+        .stat-info h3 { font-size: 14px; color: #7f8c8d; margin-bottom: 5px; font-weight: bold;}
+        .stat-info p { font-size: 24px; font-weight: bold; color: #2c3e50; }
+    </style>
+</head>
+<body>
+
+    <div id="login-page">
+        <div class="login-box">
+            <img src="logo_pra_skdamai.png" alt="School Logo" class="login-logo">
+            <h2>Sistem Pengurusan Prasekolah SK Damai (SKD)</h2> <p>Sila masukkan kata laluan</p> <input type="password" id="password-input" class="login-input" placeholder="Kata laluan..." onkeypress="handleKeyPress(event)">
+            <button class="login-btn" onclick="checkLogin()">Log Masuk</button>
+            <div id="error-message" class="error-msg">❌ Kata laluan salah ! ❌</div>
+        </div>
+    </div>
+
+    <div id="main-app">
+        <header>
+            <button class="menu-toggle" onclick="toggleMenu()">☰</button>
+            <div class="header-title-container">
+                <img src="logo_pra_skdamai.png" alt="School Logo" class="header-logo">
+                <h1>Sistem Pengurusan Prasekolah SK Damai (SKD)</h1>
+            </div>
+            <button class="logout-btn" onclick="logout()">🚪 Log Keluar</button>
+        </header>
+
+        <div class="main-container">
+            <aside class="sidebar" id="sidebar">
+                <ul class="menu-list" id="menu-container"></ul>
+                <button class="home-btn" onclick="goToHomepage()">🏠 Laman Utama</button>
+            </aside>
+
+            <main class="content-area">
+                <div class="content-header">
+                    <h2 id="page-title">Paparan Pemuka (Dashboard)</h2>
+                    <button id="edit-btn" onclick="requestEditAccess()">Edit Dokumen</button>
+                </div>
+                <div class="iframe-container" id="iframe-container"></div>
+            </main>
+        </div>
+    </div>
+
+    <script>
+    // ==========================================
+    // 1. 登入与登出逻辑
+    // ==========================================
+    const SYSTEM_PASSWORD = "888"; 
+
+    function checkLogin() {
+        const inputVal = document.getElementById('password-input').value.trim();
+        const errorMsg = document.getElementById('error-message');
+        
+        if (inputVal === SYSTEM_PASSWORD) {
+            document.getElementById('login-page').style.display = 'none';
+            document.getElementById('main-app').style.display = 'flex';
+            document.title = "SMK - Dashboard";
+            goToHomepage();
+        } else {
+            errorMsg.style.display = 'block';
+            document.getElementById('password-input').value = "";
+            document.getElementById('password-input').focus();
+        }
+    }
+
+    function handleKeyPress(event) { if (event.key === "Enter") checkLogin(); }
+
+    function logout() {
+        document.getElementById('main-app').style.display = 'none';
+        document.getElementById('login-page').style.display = 'flex';
+        document.getElementById('password-input').value = "";
+        document.getElementById('error-message').style.display = 'none';
+        document.title = "Sistem Pengurusan SMK";
+        goToHomepage(); 
+    }
+
+    // ==========================================
+    // 2. 核心配置区与菜单逻辑
+    // ==========================================
+    function toggleMenu() { document.getElementById('sidebar').classList.toggle('hidden'); }
+
+    let currentEditUrl = "";
+    let clockInterval = null; 
+
+    const menuData = [
+        { mainTitle: "💼 Pengurusan Rekod", subItems: [ 
+{ name: "Latar Belakang Prasekolah", viewUrl: "https://docs.google.com/document/d/e/2PACX-xxxxxx/pub?embedded=true", editUrl: "https://docs.google.com/document/d/yyyyyy/edit" }, 
+
+{ name: "Carta Organisasi", viewUrl: "", editUrl: "" },
+
+{ name: "Takwim Tahunan", viewUrl: "", editUrl: "" },
+
+{ name: "Profil Guru dan PPM", viewUrl: "", editUrl: "" },
+
+{ name: "Profil Murid", viewUrl: "https://docs.google.com/document/d/e/2PACX-1vSWv-92iA0PjurP8TjHKCpK1KznVdmqWOLQH2qjoV0nd03Rl8WjSkTuV6P5vhrp5A_y7C3c26yb7en1/pub", editUrl: "https://docs.google.com/document/d/1uSn43CW8WyYM2RHGmfXxo-43M3HHN1M0DldYyX-2iUs/edit?usp=sharing" },
+
+{ name: "Akta/Pekeliling/Surat Siaran/Surat Makluman", viewUrl: "", editUrl: "" },
+
+{ name: "Rancangan Pendidikan Harian (RPH)", viewUrl: "", editUrl: "" },
+
+{ name: "Laporan dan Dokumentasi Program", viewUrl: "", editUrl: "" },
+
+{ name: "Surat/Borang Kebenaran Ibu Bapa", viewUrl: "", editUrl: "" },
+
+{ name: "Rancangan Pelajaran Tahunan (RPT)", viewUrl: "", editUrl: "" },
+
+{ name: "Jadual Waktu Terkini", viewUrl: "", editUrl: "" },
+
+{ name: "Dokumen Pentaksiran Prasekolah", viewUrl: "", editUrl: "" },
+
+{ name: "Portfolio Pentaksiran", viewUrl: "", editUrl: "" },
+ ] },
+
+
+
+        { mainTitle: "Pengurusan Ruang", subItems: [ 
+{ name: "Pelan Rancangan Ruang Prasekolah", viewUrl: "", editUrl: "" }] },
+
+
+	{ mainTitle: "Pengurusan Pemakanan", subItems: [ 
+{ name: "Menu Standard Prasekolah", viewUrl: "", editUrl: "" },
+ 
+{ name: "Senarai Pembekal ", viewUrl: "", editUrl: "" } ] },
+
+
+
+{ mainTitle: "Pengurusan Sumber", subItems: [ 
+{ name: "Inventori Bahan", viewUrl: "", editUrl: "" },
+ 
+{ name: "Peruntukan Bantuan Tahun Semasa", viewUrl: "", editUrl: "" },
+
+{ name: "Aggaran Perbelanjaan", viewUrl: "", editUrl: "" },
+
+{ name: "Dokumen Kewangan", viewUrl: "", editUrl: "" },
+
+ ] },
+
+
+{ mainTitle: "Pengurusan Keselamtan", subItems: [ 
+{ name: "Pelan Kecemasan Kebakaran", viewUrl: "", editUrl: "" },
+ 
+{ name: "Rekod Pergerakan Keluar Masuk", viewUrl: "", editUrl: "" },
+
+{ name: "Rekod Pelawat", viewUrl: "", editUrl: "" },
+
+{ name: "Surat/Sijil Cuti Sakit Murid", viewUrl: "", editUrl: "" },
+
+{ name: "Dokumen Kesihatan Murid", viewUrl: "", editUrl: "" }
+ ] }
+
+
+    ];
+
+
+
+
+
+    // ★ 自定义 4 个统计方块 (马来文版) ★
+    const dashboardHTML = `
+        <div class="dashboard">
+            <div class="welcome-banner">
+                <div class="welcome-text">
+                    <h1>Selamat Datang👋</h1>
+                    <p>Sila tekan rekod-rekod dalam menu di sebelah kiri untuk bermula.</p>
+                </div>
+                <div class="clock-container">
+                    <div class="clock-time" id="clock-time">00:00:00</div>
+                    <div class="clock-date" id="clock-date">Memuatkan...</div>
+                </div>
+            </div>
+            
+            <div class="stats-grid">
+                <div class="stat-card" style="border-left-color: #3498db;">
+                    <div class="stat-icon">👨‍🎓</div>
+                    <div class="stat-info">
+                        <h3>Jumlah Pelajar</h3>
+                        <p>10 orang</p>
+                    </div>
+                </div>
+                <div class="stat-card" style="border-left-color: #2ecc71;">
+                    <div class="stat-icon">👩‍🏫</div>
+                    <div class="stat-info">
+                        <h3>Jumlah Guru & Staf</h3>
+                        <p>2 orang</p>
+                    </div>
+                </div>
+                <div class="stat-card" style="border-left-color: #f1c40f;">
+                    <div class="stat-icon">📝</div>
+                    <div class="stat-info">
+                        <h3>Kurikulum Semasa</h3>
+                        <p>Kurikulum Prasekolah 2026</p>
+                    </div>
+                </div>
+                <div class="stat-card" style="border-left-color: #e74c3c;">
+                    <div class="stat-icon">📅</div>
+                    <div class="stat-info">
+                        <h3>No. Tel Rasmi SKD</h3>
+                        <p>03-86796133</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+
+    const menuContainer = document.getElementById('menu-container');
+    menuData.forEach(mainMenu => {
+        const mainLi = document.createElement('li'); mainLi.className = 'menu-item';
+        const titleDiv = document.createElement('div'); titleDiv.className = 'menu-title';
+        titleDiv.innerHTML = `<span>${mainMenu.mainTitle}</span> <span>▼</span>`;
+        const submenuUl = document.createElement('ul'); submenuUl.className = 'submenu';
+        titleDiv.onclick = () => { submenuUl.classList.toggle('active'); };
+        mainMenu.subItems.forEach(subItem => {
+            const subLi = document.createElement('li'); subLi.innerText = subItem.name;
+            subLi.onclick = () => { loadSubpage(`${mainMenu.mainTitle} - ${subItem.name}`, subItem.viewUrl, subItem.editUrl); };
+            submenuUl.appendChild(subLi);
+        });
+        mainLi.appendChild(titleDiv); mainLi.appendChild(submenuUl); menuContainer.appendChild(mainLi);
+    });
+
+    function loadSubpage(pageName, viewUrl, editUrl) {
+        document.getElementById('page-title').innerText = pageName;
+        currentEditUrl = editUrl || ""; 
+        const iframeContainer = document.getElementById('iframe-container');
+        const editBtn = document.getElementById('edit-btn');
+        if (viewUrl) { iframeContainer.innerHTML = `<iframe src="${viewUrl}"></iframe>`; iframeContainer.style.padding = "0"; } 
+        else { iframeContainer.innerHTML = `<div style="padding: 40px; text-align: center; color:#e74c3c; font-size: 1.2rem;">⚠️ Pautan Dokumen / Hamparan belum dikonfigurasi.</div>`; }
+        editBtn.style.display = 'block';
+        if (currentEditUrl === "") { editBtn.style.opacity = "0.5"; editBtn.title = "Tiada pautan suntingan (edit link)"; } 
+        else { editBtn.style.opacity = "1"; editBtn.title = "Klik untuk sunting dokumen"; }
+    }
+
+    function requestEditAccess() {
+        if (currentEditUrl === "") { alert("Pautan suntingan belum ditetapkan oleh Admin."); return; }
+        const pin = prompt("Sila masukkan nombor PIN untuk menyunting (Pin Number):");
+        if (pin === null) return; 
+        if (pin === "9999") { window.open(currentEditUrl, '_blank'); } 
+        else { alert("PIN salah, akses ditolak!"); }
+    }
+
+    function goToHomepage() {
+        document.getElementById('page-title').innerText = "Maklumat Asas Prasekolah SK Damai (SKD)";
+        document.getElementById('edit-btn').style.display = 'none';
+        currentEditUrl = ""; 
+        document.getElementById('iframe-container').innerHTML = dashboardHTML;
+        
+        if (clockInterval) clearInterval(clockInterval);
+        
+        function updateClock() {
+            const timeEl = document.getElementById('clock-time');
+            const dateEl = document.getElementById('clock-date');
+            
+            if (!timeEl || !dateEl) return; 
+            
+            const now = new Date();
+            
+            // 格式化时间 (24小时制)
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const seconds = String(now.getSeconds()).padStart(2, '0');
+            timeEl.innerText = `${hours}:${minutes}:${seconds}`;
+            
+            // ★ 核心修改：使用 ms-MY 本地化格式输出马来文日期 ★
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            dateEl.innerText = now.toLocaleDateString('ms-MY', options);
+        }
+        
+        updateClock();
+        clockInterval = setInterval(updateClock, 1000);
+    }
+    </script>
+</body>
+</html>
