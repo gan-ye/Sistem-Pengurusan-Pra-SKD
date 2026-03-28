@@ -141,7 +141,7 @@
         if (inputVal === SYSTEM_PASSWORD) {
             document.getElementById('login-page').style.display = 'none';
             document.getElementById('main-app').style.display = 'flex';
-            document.title = "SMK - Dashboard";
+            document.title = "Sistem Pra SKD";
             goToHomepage();
         } else {
             errorMsg.style.display = 'block';
@@ -157,7 +157,7 @@
         document.getElementById('login-page').style.display = 'flex';
         document.getElementById('password-input').value = "";
         document.getElementById('error-message').style.display = 'none';
-        document.title = "Sistem Pengurusan SMK";
+        document.title = "Sistem Pra SKD";
         goToHomepage(); 
     }
 
@@ -312,13 +312,13 @@
         if (viewUrl) { iframeContainer.innerHTML = `<iframe src="${viewUrl}"></iframe>`; iframeContainer.style.padding = "0"; } 
         else { iframeContainer.innerHTML = `<div style="padding: 40px; text-align: center; color:#e74c3c; font-size: 1.2rem;">⚠️ Pautan Dokumen / Hamparan belum dikonfigurasi.</div>`; }
         editBtn.style.display = 'block';
-        if (currentEditUrl === "") { editBtn.style.opacity = "0.5"; editBtn.title = "Tiada pautan suntingan (edit link)"; } 
-        else { editBtn.style.opacity = "1"; editBtn.title = "Klik untuk sunting dokumen"; }
+        if (currentEditUrl === "") { editBtn.style.opacity = "0.5"; editBtn.title = "Fungsi edit belum diaktifkan"; } 
+        else { editBtn.style.opacity = "1"; editBtn.title = "Klik untuk edit dokumen"; }
     }
 
     function requestEditAccess() {
-        if (currentEditUrl === "") { alert("Pautan suntingan belum ditetapkan oleh Admin."); return; }
-        const pin = prompt("Sila masukkan nombor PIN untuk menyunting (Pin Number):");
+        if (currentEditUrl === "") { alert("Fungsi edit belum diaktifkan"); return; }
+        const pin = prompt("Sila masukkan nombor PIN yang betul untuk edit dokumen ini:");
         if (pin === null) return; 
         if (pin === "9999") { window.open(currentEditUrl, '_blank'); } 
         else { alert("PIN salah, akses ditolak!"); }
