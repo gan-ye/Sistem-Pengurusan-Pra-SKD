@@ -313,12 +313,12 @@
         if (viewUrl) { iframeContainer.innerHTML = `<iframe src="${viewUrl}"></iframe>`; iframeContainer.style.padding = "0"; } 
         else { iframeContainer.innerHTML = `<div style="padding: 40px; text-align: center; color:#e74c3c; font-size: 1.2rem;">⚠️ Pautan Dokumen / Hamparan belum dikonfigurasi.</div>`; }
         editBtn.style.display = 'block';
-        if (currentEditUrl === "") { editBtn.style.opacity = "0.5"; editBtn.title = "Fungsi edit belum diaktifkan"; } 
+        if (currentEditUrl === "") { editBtn.style.opacity = "0.5"; editBtn.title = "Fungsi edit tidak diaktifkan untuk dokumen ini"; } 
         else { editBtn.style.opacity = "1"; editBtn.title = "Klik untuk edit dokumen"; }
     }
 
     function requestEditAccess() {
-        if (currentEditUrl === "") { alert("Fungsi edit belum diaktifkan"); return; }
+        if (currentEditUrl === "") { alert("Fungsi edit tidak diaktifkan untuk dokumen ini"); return; }
         const pin = prompt("Sila masukkan nombor PIN yang betul untuk edit dokumen ini:");
         if (pin === null) return; 
         if (pin === "9999") { window.open(currentEditUrl, '_blank'); } 
